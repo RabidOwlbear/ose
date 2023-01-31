@@ -51,12 +51,10 @@ export const registerSettings = function () {
     scope: "world",
     type: String,
     config: true,
-    choices: {
-      disabled: "OSE.Setting.EncumbranceDisabled",
-      basic: "OSE.Setting.EncumbranceBasic",
-      detailed: "OSE.Setting.EncumbranceDetailed",
-      complete: "OSE.Setting.EncumbranceComplete",
-    },
+    choices: Object.values(CONFIG.OSE.encumbranceOptions)
+      .reduce((obj: {[n:string]: string}, enc) => {
+        return {...obj, [enc.type]: enc.localizedLabel}
+      }, {}),
   });
 
   game.settings.register(game.system.id, "significantTreasure", {
@@ -88,6 +86,14 @@ export const registerSettings = function () {
       targeted: "OSE.Setting.damageTarget",
     },
   });
+  game.settings.register(game.system.id, "invertedCtrlBehavior", {
+    name: game.i18n.localize("OSE.Setting.InvertedCtrlBehavior"),
+    hint: game.i18n.localize("OSE.Setting.InvertedCtrlBehaviorHint"),
+    default: false,
+    scope: "world",
+    type: Boolean,
+    config: true,
+  })
 };
 
 declare global {

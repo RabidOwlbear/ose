@@ -16,6 +16,16 @@ import * as party from "./module/party";
 import { OseCombat } from "./module/combat";
 import * as renderList from "./module/renderList";
 import { OsePartySheet } from "./module/party/party-sheet";
+import './e2e';
+
+import OseDataModelCharacter from './module/actor/data-model-character';
+import OseDataModelMonster from './module/actor/data-model-monster';
+import OseDataModelWeapon from './module/item/data-model-weapon';
+import OseDataModelArmor from './module/item/data-model-armor';
+import OseDataModelItem from './module/item/data-model-item';
+import OseDataModelSpell from './module/item/data-model-spell';
+import OseDataModelAbility  from './module/item/data-model-ability';
+import OseDataModelContainer from './module/item/data-model-container';
 
 /* -------------------------------------------- */
 /*  Foundry VTT Initialization                  */
@@ -27,7 +37,7 @@ Hooks.once("init", async function () {
    * @type {String}
    */
   CONFIG.Combat.initiative = {
-    formula: "1d6 + @initiative.value",
+    formula: "1d6 + @init",
     decimals: 2,
   };
 
@@ -43,6 +53,11 @@ Hooks.once("init", async function () {
 
   // Custom Handlebars helpers
   registerHelpers();
+  
+  // Give modules a chance to add encumbrance schemes
+  // They can do so by adding their encumbrance schemes
+  // to CONFIG.OSE.encumbranceOptions
+  Hooks.call('ose-setup-encumbrance');
 
   // Register custom system settings
   registerSettings();
@@ -52,6 +67,19 @@ Hooks.once("init", async function () {
 
   CONFIG.Actor.documentClass = OseActor;
   CONFIG.Item.documentClass = OseItem;
+
+  CONFIG.Actor.systemDataModels = {
+    character: OseDataModelCharacter,
+    monster: OseDataModelMonster,
+  }
+  CONFIG.Item.systemDataModels = {
+    weapon: OseDataModelWeapon,
+    armor: OseDataModelArmor,
+    item: OseDataModelItem,
+    spell: OseDataModelSpell,
+    ability: OseDataModelAbility,
+    container: OseDataModelContainer,
+  }
 
   // Register sheet application classes
   Actors.unregisterSheet("core", ActorSheet);
@@ -105,9 +133,11 @@ Hooks.once("setup", function () {
 });
 
 Hooks.once("ready", async () => {
-  Hooks.on("hotbarDrop", (bar, data, slot) =>
-    macros.createOseMacro(data, slot)
-  );
+  Hooks.on("hotbarDrop", (bar, data, slot) => {
+    macros.createOseMacro(data, slot);
+    // Returning false to stop the rest of hotbarDrop handling.
+    return false;
+  });
 });
 
 // License info
@@ -133,7 +163,7 @@ Hooks.on("renderSidebarTab", async (object, html) => {
     const styling =
       "border:none;margin-right:2px;vertical-align:middle;margin-bottom:5px";
     $(
-      `<button data-action="userguide"><img src='systems/ose/assets/dragon.png' width='16' height='16' style='${styling}'/>Old School Guide</button>`
+      `<button type="button" data-action="userguide"><img src='${OSE.assetsPath}/dragon.png' width='16' height='16' style='${styling}'/>Old School Guide</button>`
     ).insertAfter(docs);
     html.find('button[data-action="userguide"]').click((ev) => {
       new FrameViewer("https://vttred.github.io/ose", {
